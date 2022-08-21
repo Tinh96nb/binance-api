@@ -17,7 +17,7 @@ const pairs = require("./pairs.json");
   const interval = "1m";
   const amountTick = 10;
   const listNoti = {
-    1: 2.5,
+    1: 2.2,
     3: 5,
     5: 7,
   };
