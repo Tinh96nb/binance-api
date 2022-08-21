@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "dotenv": "10.0.0",
-    "node-binance-api": "^0.13.1"
+    "node-binance-api": "^0.13.1",
+    "node-telegram-bot-api": "^0.58.0"
   },
   "scripts": {
     "noti": "pm2 start noti.js --name=binance-noti"

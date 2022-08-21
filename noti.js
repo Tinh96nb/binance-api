@@ -1,4 +1,8 @@
 require("dotenv").config();
+const TelegramBot = require("node-telegram-bot-api");
+const token = process.env.BOT_KEY;
+const bot = new TelegramBot(token, { polling: true });
+
 const Binance = require("node-binance-api");
 const binance = new Binance().options({
   APIKEY: process.env.KEY,
@@ -35,10 +39,14 @@ const pairs = require("./pairs.json");
           const changePercent =
             ((tick.close - lastTick.close) / lastTick.close) * 100;
           if (Math.abs(changePercent) >= listNoti[typeMin]) {
-            console.log(
-              `Bien dong bat thuong ${new Date().toLocaleString(
-                "en-US"
-              )} ${symbol} khung ${typeMin}m: ${changePercent.toFixed(2)}%`
+            bot.sendMessage(
+              process.env.GROUPID,
+              `${
+                changePercent > 0 ? "🟢" : "🔴"
+              } *${symbol}* change *${changePercent.toFixed(
+                2
+              )}%* in *${typeMin}m*`,
+              { parse_mode: "Markdown" }
             );
           }
         }
