@@ -8,6 +8,7 @@ const binance = new Binance().options({
 });
 const pairs = require("./pairs.json");
 
+console.log(process.env.KEY);
 (async function main() {
   const miliSecondOneMin = 60000;
   const interval = "1m";
@@ -48,4 +49,4 @@ const pairs = require("./pairs.json");
       amountTick
     );
   });
-})();
+});
