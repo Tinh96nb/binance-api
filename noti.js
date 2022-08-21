@@ -8,7 +8,6 @@ const binance = new Binance().options({
 });
 const pairs = require("./pairs.json");
 
-console.log(process.env.KEY);
 (async function main() {
   const miliSecondOneMin = 60000;
   const interval = "1m";
@@ -18,18 +17,15 @@ console.log(process.env.KEY);
     3: 5,
     5: 7,
   };
-  console.log(process.env.KEY);
-  console.log("Start noti service:");
   pairs.forEach((pair) => {
     binance.websockets.chart(
       pair,
       interval,
       (symbol, interval, chart) => {
         const tickLength = Object.keys(chart).length;
-        console.log(tickLength);
         const lastTimeTick = Object.keys(chart)[tickLength - 1];
         const lastTick = chart[lastTimeTick];
-        if (lastTick?.hasOwnProperty("isFinal")) return;
+        if (lastTick.hasOwnProperty("isFinal")) return;
         for (const typeMin in listNoti) {
           // get tick before
           const tick = chart[lastTimeTick - typeMin * miliSecondOneMin];
@@ -49,4 +45,4 @@ console.log(process.env.KEY);
       amountTick
     );
   });
-});
+})();
