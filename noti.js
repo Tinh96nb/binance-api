@@ -17,6 +17,7 @@ const pairs = require("./pairs.json");
     3: 5,
     5: 7,
   };
+  console.log(process.env.KEY);
   console.log("Start noti service:");
   pairs.forEach((pair) => {
     binance.websockets.chart(
@@ -24,6 +25,7 @@ const pairs = require("./pairs.json");
       interval,
       (symbol, interval, chart) => {
         const tickLength = Object.keys(chart).length;
+        console.log(tickLength);
         const lastTimeTick = Object.keys(chart)[tickLength - 1];
         const lastTick = chart[lastTimeTick];
         if (lastTick?.hasOwnProperty("isFinal")) return;
