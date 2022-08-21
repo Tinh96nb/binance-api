@@ -17,6 +17,7 @@ const pairs = require("./pairs.json");
     3: 5,
     5: 7,
   };
+  console.log("Start service notification");
   pairs.forEach((pair) => {
     binance.websockets.chart(
       pair,
