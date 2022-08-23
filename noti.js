@@ -37,7 +37,7 @@ const pairs = require("./pairs.json");
           if (!tick) return;
           // cal change percent
           const changePercent =
-            ((tick.close - lastTick.close) / lastTick.close) * 100;
+            ((lastTick.close - tick.close) / tick.close) * 100;
           if (Math.abs(changePercent) >= listNoti[typeMin]) {
             bot.sendMessage(
               process.env.GROUPID,
@@ -45,7 +45,7 @@ const pairs = require("./pairs.json");
                 changePercent > 0 ? "🟢" : "🔴"
               } *${symbol}* change *${changePercent.toFixed(
                 2
-              )}%* in *${typeMin}m*`,
+              )}%* in *${typeMin}m* from ${tick.close} to ${lastTick.close}`,
               { parse_mode: "Markdown" }
             );
           }

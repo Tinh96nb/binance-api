@@ -11,15 +11,15 @@ const initBalance = 1000;
 
 (async function main() {
   const sumBalance = {};
-  const month = "10";
-  for (let date = 1; date < 30; date++) {
-    const from = new Date(`2021-${month}-${date} 00:00:00`).getTime();
-    const to = new Date(`2021-${month}-${date + 1} 00:00:00`).getTime();
+  const month = "8";
+  for (let date = 22; date < 23; date++) {
+    const from = new Date(`2022-${month}-${date} 00:00:00`).getTime();
+    const to = new Date(`2022-${month}-${date + 1} 00:00:00`).getTime();
     binance.candlesticks(
       "BTCUSDT",
       "30m",
       (error, ticks) => {
-        for (let i = 0.01; i < 0.011; i = i + 0.001) {
+        for (let i = 0.01; i < 0.015; i = i + 0.001) {
           for (let j = 0.001; j < 0.002; j = j + 0.001) {
             const percentTp = +parseFloat(i).toFixed(3);
             const percentSl = +parseFloat(j).toFixed(3);
