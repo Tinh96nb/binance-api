@@ -71,7 +71,9 @@ const binance = new Binance().options({
           await orderSell(symbol, boughtAmount, tpPrice, slPrice);
           bot.sendMessage(
             process.env.GROUPID,
-            `Buy setup ${symbol}, amount *${boughtAmount}*, price *${lastTick.close}*, tp *${tpPrice}*, sl *${slPrice}*`,
+            `Buy setup ${symbol}, amount *${boughtAmount}*, price *${lastTick.close.toFixed(
+              2
+            )}*, tp *${tpPrice}*, sl *${slPrice}*`,
             { parse_mode: "Markdown" }
           );
         }
