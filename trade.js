@@ -26,9 +26,9 @@ const binance = new Binance().options({
 
   bot.sendMessage(
     process.env.GROUPID,
-    `Start trade ${
+    `Start trade *${
       pairs[0]
-    } with balance ${balance} ${tokenBuy}, volumn per order ${moneyPerOrder} ${tokenBuy} at ${new Date().toLocaleString(
+    }* with balance *${balance} ${tokenBuy}*, volumn per order *${moneyPerOrder} ${tokenBuy}* at ${new Date().toLocaleString(
       "Vi-VN"
     )}`,
     { parse_mode: "Markdown" }
@@ -58,9 +58,9 @@ const binance = new Binance().options({
           const balance = await getBalance(tokenBuy);
           bot.sendMessage(
             process.env.GROUPID,
-            `Sell setup at ${new Date().toLocaleString(
+            `Sell market setup at ${new Date().toLocaleString(
               "Vi-VN"
-            )}, balance ${balance} ${tokenBuy}`,
+            )}, balance *${balance} ${tokenBuy}*`,
             { parse_mode: "Markdown" }
           );
         }
@@ -77,7 +77,7 @@ const binance = new Binance().options({
           await orderSell(symbol, boughtAmount, tpPrice, slPrice);
           bot.sendMessage(
             process.env.GROUPID,
-            `Buy setup ${symbol} mua ${boughtAmount} gia ${lastTick.close} tp: ${tpPrice} sl: ${slPrice}`,
+            `Buy setup ${symbol}, amount: *${boughtAmount}*, price: *${lastTick.close} tp: *${tpPrice}* sl: *${slPrice}*`,
             { parse_mode: "Markdown" }
           );
         }
