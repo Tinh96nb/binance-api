@@ -5,6 +5,7 @@
     "node-telegram-bot-api": "^0.58.0"
   },
   "scripts": {
-    "noti": "pm2 start noti.js --name=binance-noti"
+    "noti": "pm2 start noti.js --name=binance-noti",
+    "trade": "pm2 start trade.js --name=binance-trade"
   }
 }
