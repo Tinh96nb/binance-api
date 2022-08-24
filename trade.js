@@ -1,4 +1,8 @@
 require("dotenv").config();
+const TelegramBot = require("node-telegram-bot-api");
+const token = process.env.BOT_TRADE;
+const bot = new TelegramBot(token, { polling: true });
+
 const Binance = require("node-binance-api");
 const binance = new Binance().options({
   APIKEY: process.env.KEY,
@@ -7,69 +11,101 @@ const binance = new Binance().options({
   recvWindow: 60000,
 });
 
-const initBalance = 1000;
-
 (async function main() {
-  const sumBalance = {};
-  const month = "8";
-  for (let date = 22; date < 23; date++) {
-    const from = new Date(`2022-${month}-${date} 00:00:00`).getTime();
-    const to = new Date(`2022-${month}-${date + 1} 00:00:00`).getTime();
-    binance.candlesticks(
-      "BTCUSDT",
-      "30m",
-      (error, ticks) => {
-        for (let i = 0.01; i < 0.015; i = i + 0.001) {
-          for (let j = 0.001; j < 0.002; j = j + 0.001) {
-            const percentTp = +parseFloat(i).toFixed(3);
-            const percentSl = +parseFloat(j).toFixed(3);
-            const balance = calculateBalance(percentTp, percentSl, ticks);
-            const profit = balance - initBalance;
-            if (!sumBalance[`${percentTp}${percentSl}`])
-              sumBalance[`${percentTp}${percentSl}`] = +profit;
-            sumBalance[`${percentTp}${percentSl}`] += +profit;
-          }
+  const tokenBuy = "USDT";
+  const amountTick = 10;
+  const intervalTime = 15;
+
+  const balance = await getBalance(tokenBuy);
+
+  const percentTp = 0.01;
+  const percentSl = 0.001;
+  const moneyPerOrder = 100;
+
+  const pairs = [`BTC${tokenBuy}`];
+
+  bot.sendMessage(
+    process.env.GROUPID,
+    `Start trade ${
+      pairs[0]
+    } with balance ${balance} ${tokenBuy}, volumn per order ${moneyPerOrder} ${tokenBuy} at ${new Date().toLocaleString(
+      "Vi-VN"
+    )}`,
+    { parse_mode: "Markdown" }
+  );
+
+  for (let index = 0; index < pairs.length; index++) {
+    const pair = pairs[index];
+
+    let boughtAmount = null;
+
+    binance.websockets.chart(
+      pair,
+      `${intervalTime}m`,
+      async (symbol, interval, chart) => {
+        const listTickTime = Object.keys(chart);
+        const lastTick = chart[listTickTime[listTickTime.length - 1]];
+
+        const tickBefore = chart[listTickTime[listTickTime.length - 2]];
+
+        // return neu chưa đến 1 nến mới
+        if (lastTick.hasOwnProperty("isFinal")) return;
+        if (boughtAmount !== null) {
+          try {
+            await binance.marketSell(symbol, boughtAmount);
+          } catch (error) {}
+          boughtAmount = null;
+          const balance = await getBalance(tokenBuy);
+          bot.sendMessage(
+            process.env.GROUPID,
+            `Sell setup at ${new Date().toLocaleString(
+              "Vi-VN"
+            )}, balance ${balance} ${tokenBuy}`,
+            { parse_mode: "Markdown" }
+          );
         }
-        const keysSorted = Object.keys(sumBalance).sort(function (a, b) {
-          return sumBalance[b] - sumBalance[a];
-        });
-        console.log(keysSorted[0], sumBalance[keysSorted[0]]);
+        const lastClose = +lastTick.close;
+        const lastOpen = +lastTick.open;
+        if (lastClose > lastOpen && +tickBefore.close > +tickBefore.open) {
+          boughtAmount = +(moneyPerOrder / lastClose).toFixed(5);
+
+          await binance.marketBuy(symbol, boughtAmount);
+
+          const tpPrice = +(lastClose * percentTp + lastClose).toFixed(2);
+          const slPrice = +(lastClose - lastClose * percentSl).toFixed(2);
+
+          await orderSell(symbol, boughtAmount, tpPrice, slPrice);
+          bot.sendMessage(
+            process.env.GROUPID,
+            `Buy setup ${symbol} mua ${boughtAmount} gia ${lastTick.close} tp: ${tpPrice} sl: ${slPrice}`,
+            { parse_mode: "Markdown" }
+          );
+        }
       },
-      { limit: 500, startTime: from, endTime: to }
+      amountTick
     );
   }
 })();
 
-function calculateBalance(percentTp, percentSl, ticks) {
-  const volOrder = 1000;
-
-  let flagBuyCount = 0;
-  let balance = initBalance;
-  ticks.forEach((stick) => {
-    const [time, open, high, low, close, volume] = stick;
-    if (close > open) {
-      flagBuyCount++;
-    } else {
-      flagBuyCount = 0;
-      return;
-    }
-    // set buy tai nen xanh thu 2 lien tiep
-    if (flagBuyCount < 2) return;
-    const tpPrice = +open * percentTp + +open;
-    const slPrice = +open - +open * percentSl;
-
-    // sl
-    if (+low > slPrice) {
-      balance -= volOrder * percentSl;
-      return;
-    }
-    // tp
-    if (+high > +tpPrice) {
-      balance += volOrder * percentTp;
-      return;
-    }
-    const percentClose = (+close - +open) / +open;
-    balance += volOrder * percentClose;
+function getBalance(token) {
+  return new Promise((resolve, reject) => {
+    binance.balance((error, balances) => {
+      if (error) reject(error);
+      resolve(balances[token].available);
+    });
   });
-  return balance;
+}
+
+function orderSell(symbol, quantity, tp, sl) {
+  return binance.order(
+    "SELL",
+    symbol,
+    quantity,
+    tp,
+    (flags = {
+      type: "OCO",
+      stopPrice: sl,
+      stopLimitPrice: sl,
+    })
+  );
 }
