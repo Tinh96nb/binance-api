@@ -45,7 +45,9 @@ const pairs = require("./pairs.json");
                 changePercent > 0 ? "🟢" : "🔴"
               } *${symbol}* change *${changePercent.toFixed(
                 2
-              )}%* in *${typeMin}m* from ${tick.close} to ${lastTick.close}`,
+              )}%* in *${typeMin}m* from *${fmtUFix(tick.close)}* to *${fmtUFix(
+                lastTick.close
+              )}*`,
               { parse_mode: "Markdown" }
             );
           }
@@ -55,3 +57,17 @@ const pairs = require("./pairs.json");
     );
   });
 })();
+
+function fmtUFix(balance) {
+  if (balance == null) return "0.0";
+  let res = String(balance);
+  if (res.indexOf(".") === -1) {
+    res = `${res}.0`;
+  } else {
+    res = [res.replace(/0+$/, "").replace(/\.$/, "")].filter(Boolean).join(" ");
+    if (res.indexOf(".") === -1) {
+      res = `${res}.0`;
+    }
+  }
+  return res;
+}
