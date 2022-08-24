@@ -14,9 +14,9 @@ const binance = new Binance().options({
 (async function main() {
   const tokenBuy = "USDT";
   const amountTick = 10;
-  const intervalTime = 15;
-
   const balance = await getBalance(tokenBuy);
+
+  const intervalTime = 30;
 
   const percentTp = 0.01;
   const percentSl = 0.001;
@@ -35,21 +35,29 @@ const binance = new Binance().options({
 
     let boughtAmount = null;
 
+    let firstTime = true;
     binance.websockets.chart(
       pair,
       `${intervalTime}m`,
       async (symbol, interval, chart) => {
         const listTickTime = Object.keys(chart);
-        const lastTick = chart[listTickTime[listTickTime.length - 1]];
 
+        const lastTick = chart[listTickTime[listTickTime.length - 1]];
         const tickBefore = chart[listTickTime[listTickTime.length - 2]];
 
         // return neu chưa đến 1 nến mới
         if (lastTick.hasOwnProperty("isFinal")) return;
+        if (firstTime) {
+          firstTime = false;
+          return;
+        }
         if (boughtAmount !== null) {
           try {
+            await binance.cancelAll(symbol);
             await binance.marketSell(symbol, boughtAmount);
-          } catch (error) {}
+          } catch (error) {
+            console.log("error sell");
+          }
           boughtAmount = null;
           const balance = await getBalance(tokenBuy);
           bot.sendMessage(
