@@ -20,7 +20,7 @@ const binance = new Binance().options({
 
   const percentTp = 0.01;
   const percentSl = 0.001;
-  const moneyPerOrder = 100;
+  const moneyPerOrder = 1000;
 
   const pairs = [`BTC${tokenBuy}`];
 

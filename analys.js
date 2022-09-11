@@ -9,36 +9,59 @@ const binance = new Binance().options({
 
 const initBalance = 1000;
 
-(async function main() {
-  const sumBalance = {};
-  const month = "08";
-  for (let date = 23; date < 24; date++) {
-    const from = new Date(`2022-${month}-${date} 00:00:00`).getTime();
-    const to = new Date(`2022-${month}-${date + 1} 00:00:00`).getTime();
+(async function () {
+  const monthFrom = 2;
+  const monthTo = 2;
+
+  const dayFrom = 1;
+  const dayTo = 30;
+
+  const interval = 15;
+
+  const groupByPecent = {};
+  for (let month = monthFrom; month <= monthTo; month++) {
+    for (let day = dayFrom; day <= dayTo; day++) {
+      const from = new Date(`2022-${month}-${day} 00:00:00`).getTime();
+      const to = new Date(`2022-${month}-${day + 1} 00:00:00`).getTime();
+      const res = await main(interval, from, to);
+      console.log(day, month, res);
+      if (!groupByPecent[res.percent]) groupByPecent[res.percent] = +res.tp;
+      else groupByPecent[res.percent] += +res.tp;
+    }
+  }
+  console.log(groupByPecent);
+})();
+
+function main(interval, from, to) {
+  return new Promise((resolve, reject) => {
+    const sumBalance = {};
     binance.candlesticks(
       "BTCUSDT",
-      "15m",
+      `${interval}m`,
       (error, ticks) => {
-        for (let i = 0.01; i < 0.011; i = i + 0.001) {
-          for (let j = 0.001; j < 0.002; j = j + 0.001) {
+        for (let i = 0.006; i < 0.02; i = i + 0.001) {
+          for (let j = 0.001; j < 0.005; j = j + 0.001) {
             const percentTp = +parseFloat(i).toFixed(3);
             const percentSl = +parseFloat(j).toFixed(3);
             const balance = calculateBalance(percentTp, percentSl, ticks);
             const profit = balance - initBalance;
             if (!sumBalance[`${percentTp}${percentSl}`])
               sumBalance[`${percentTp}${percentSl}`] = +profit;
-            sumBalance[`${percentTp}${percentSl}`] += +profit;
+            else sumBalance[`${percentTp}${percentSl}`] += +profit;
           }
         }
         const keysSorted = Object.keys(sumBalance).sort(function (a, b) {
           return sumBalance[b] - sumBalance[a];
         });
-        console.log(keysSorted[0], sumBalance[keysSorted[0]]);
+        resolve({
+          percent: keysSorted[0],
+          tp: sumBalance[keysSorted[0]].toFixed(2),
+        });
       },
-      { limit: 500, startTime: from, endTime: to }
+      { limit: (24 * 60) / interval, startTime: from, endTime: to }
     );
-  }
-})();
+  });
+}
 
 function calculateBalance(percentTp, percentSl, ticks) {
   const volOrder = 1000;
@@ -47,29 +70,24 @@ function calculateBalance(percentTp, percentSl, ticks) {
   let balance = initBalance;
   ticks.forEach((stick) => {
     const [time, open, high, low, close, volume] = stick;
+    if (flagBuyCount >= 3) {
+      const tpPrice = +open * percentTp + +open;
+      const slPrice = +open - +open * percentSl;
+
+      if (+low <= slPrice) {
+        balance -= volOrder * percentSl;
+      } else if (+high > +tpPrice) {
+        balance += volOrder * percentTp;
+      } else {
+        const percentClose = (+close - +open) / +open;
+        balance += volOrder * percentClose;
+      }
+    }
     if (close > open) {
       flagBuyCount++;
     } else {
       flagBuyCount = 0;
-      return;
     }
-    // set buy tai nen xanh thu 2 lien tiep
-    if (flagBuyCount < 2) return;
-    const tpPrice = +open * percentTp + +open;
-    const slPrice = +open - +open * percentSl;
-
-    // sl
-    if (+low > slPrice) {
-      balance -= volOrder * percentSl;
-      return;
-    }
-    // tp
-    if (+high > +tpPrice) {
-      balance += volOrder * percentTp;
-      return;
-    }
-    const percentClose = (+close - +open) / +open;
-    balance += volOrder * percentClose;
   });
   return balance;
 }
